@@ -1,27 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Prague.Interfaces
 {
 
     internal interface IPragueRule<TParam>
     {
-        IPragueRule<TParam> First(TParam param, params IPragueRule<TParam>[] rules);
-        IPragueScoredRule<TParam> Best(TParam param, params IPragueScoredRule<TParam>[] rules);
+        bool Run(TParam param);
+        bool ShouldRun(TParam param);
 
-        IPragueRule<TParam, TResult> First<TResult>(TParam param, params IPragueRule<TParam, TResult>[] rules);
-        IPragueScoredRule<TParam, TResult> Best<TResult>(TParam param, params IPragueScoredRule<TParam, TResult>[] rules);
-
-        bool EvaluateAndRun(TParam param);
-        bool Evaluate(TParam param);
-
-        IList<Predicate<TParam>> Conditions { get; }
+        IPragueRule<TParam> Condition { get; }
         Action<TParam> Action { get; }
     }
 
-    internal interface IPragueRule<TParam, TResult> : IPragueRule<TParam>
+    internal interface IPragueRule<TParam, TResult>
     {
-        new Func<TParam, TResult> Action { get; }
+        TResult Run(TParam param);
+        bool ShouldRun(TParam param);
+
+        Func<TResult> Action { get; }
+
         TResult Result { get; }
     }
 
