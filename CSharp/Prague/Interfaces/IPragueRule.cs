@@ -2,8 +2,9 @@
 
 namespace Prague.Interfaces
 {
+    internal interface IPragueRule { }
 
-    internal interface IPragueRule<TParam>
+    internal interface IPragueRule<TParam> : IPragueRule
     {
         bool Run(TParam param);
         bool ShouldRun(TParam param);
@@ -12,14 +13,12 @@ namespace Prague.Interfaces
         Action<TParam> Action { get; }
     }
 
-    internal interface IPragueRule<TParam, TResult>
+    internal interface IPragueRule<TParam, TResult> where TResult : class
     {
         TResult Run(TParam param);
         bool ShouldRun(TParam param);
 
-        Func<TResult> Action { get; }
-
+        dynamic Action { get; }
         TResult Result { get; }
     }
-
 }
