@@ -1,24 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Prague.Interfaces
 {
-    internal interface IPragueRule { }
-
-    internal interface IPragueRule<TParam> : IPragueRule
+    internal interface IPragueRule
     {
-        bool Run(TParam param);
-        bool ShouldRun(TParam param);
-
-        IPragueRule<TParam> Condition { get; }
-        Action<TParam> Action { get; }
+        IList<dynamic> Conditions { get; }
     }
 
-    internal interface IPragueRule<TParam, TResult> where TResult : class
+    internal interface IPragueRule<TParamIn, TFinalParam> : IPragueRule
+        where TFinalParam : class
     {
-        TResult Run(TParam param);
-        bool ShouldRun(TParam param);
+        Action<TFinalParam> Action { get; }
+        IPragueRuleResult TryRun(TParamIn param);
+    }
 
-        dynamic Action { get; }
-        TResult Result { get; }
+    internal interface IPragueRule<TParamIn> : IPragueRule<TParamIn, object> { }
+
+    internal interface IPragueRuleResult
+    {
+        double Score { get; }
+
+        Action Action { get; }
     }
 }

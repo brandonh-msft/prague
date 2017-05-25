@@ -5,148 +5,87 @@ using Prague.Interfaces;
 
 namespace Prague
 {
-    //class PragueRule<T> : IPragueRule<T>
-    //{
-    //    public PragueRule(IPragueRule<T> condition, Action<T> action) : this(action)
-    //    {
-    //        this.Condition = condition ?? throw new ArgumentNullException(nameof(condition));
-    //    }
-
-    //    private Predicate<T> _predicate;
-    //    public PragueRule(Predicate<T> condition, Action<T> action)
-    //    {
-    //        _predicate = condition ?? throw new ArgumentNullException(nameof(condition));
-    //    }
-
-    //    protected PragueRule(Action<T> action)
-    //    {
-    //        this.Action = action ?? throw new ArgumentNullException(nameof(action));
-    //    }
-
-    //    public IPragueRule<T> Condition { get; private set; }
-
-    //    public Action<T> Action { get; private set; } = t => { };
-
-    //    public bool Run(T param)
-    //    {
-    //        var retVal = ShouldRun(param);
-    //        if (retVal)
-    //        {
-    //            Action(param);
-    //        }
-
-    //        return retVal;
-    //    }
-
-    //    public bool ShouldRun(T param)
-    //    {
-    //        return _predicate?.Invoke(param) ?? this.Condition.Run(param);
-    //    }
-
-    //    public static implicit operator PragueRule<T>(Action<T> action) => new PragueRule<T>(action);
-    //}
-
-    class PragueRule<TParam, TResult> : IPragueRule<TParam, TResult> where TResult : class
+    class PragueRule<TParamIn, TFinalParam> : IPragueRule<TParamIn, TFinalParam> where TFinalParam : class
     {
-        private TResult _conditionEvalResult;
-
-        private PragueRule(Func<TResult, TResult> action)
+        private PragueRule(params dynamic[] conditions)
         {
-            this.Action = action ?? throw new ArgumentNullException(nameof(action));
+            this.Conditions = conditions ?? new dynamic[0];
         }
 
-        public static PragueRule<TParam, TResult> Create(Func<TResult, TResult> action) => new PragueRule<TParam, TResult>(action);
-
-
-        public static PragueRule<TParam, TResult> Create(Func<TResult, TResult> action, IPragueRule<TParam, TResult> condition)
-        {
-            var p = new PragueRule<TParam, TResult>(action);
-
-            p.Conditions.Add(condition);
-
-            return p;
-        }
-
-        public static PragueRule<TParam, TResult> Create<T2>(Func<TResult, TResult> action, IPragueRule<TParam, T2> condition1, IPragueRule<T2, TResult> condition2)
-            where T2 : class
-        {
-            var p = new PragueRule<TParam, TResult>(action);
-
-            p.Conditions.Add(condition1);
-            p.Conditions.Add(condition2);
-
-            return p;
-        }
-
-        public static PragueRule<TParam, TResult> Create<T2, T3>(Func<TResult, TResult> action, IPragueRule<TParam, T2> condition1, IPragueRule<T2, T3> condition2, IPragueRule<T3, TResult> condition3)
+        public static PragueRule<TParamIn, TFinalParam> Create(Action<TFinalParam> action, PraguePredicate<TParamIn, TFinalParam> condition) => new PragueRule<TParamIn, TFinalParam>(condition);
+        public static PragueRule<TParamIn, TFinalParam> Create<T2>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, TFinalParam> condition2) where T2 : class => new PragueRule<TParamIn, TFinalParam>(condition1, condition2);
+        public static PragueRule<TParamIn, TFinalParam> Create<T2, T3>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, T3> condition2, PraguePredicate<T3, TFinalParam> condition3)
             where T2 : class
             where T3 : class
-        {
-            var p = new PragueRule<TParam, TResult>(action);
-
-            p.Conditions.Add(condition1);
-            p.Conditions.Add(condition2);
-            p.Conditions.Add(condition3);
-
-            return p;
-        }
-
-        public static PragueRule<TParam, TResult> Create<T2, T3, T4>(Func<TResult, TResult> action, IPragueRule<TParam, T2> condition1, IPragueRule<T2, T3> condition2, IPragueRule<T3, T4> condition3, IPragueRule<T4, TResult> condition4)
+            => new PragueRule<TParamIn, TFinalParam>(condition1, condition2, condition3);
+        public static PragueRule<TParamIn, TFinalParam> Create<T2, T3, T4>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, T3> condition2, PraguePredicate<T3, T4> condition3, PraguePredicate<T4, TFinalParam> condition4)
             where T2 : class
             where T3 : class
             where T4 : class
-        {
-            var p = new PragueRule<TParam, TResult>(action);
-
-            p.Conditions.Add(condition1);
-            p.Conditions.Add(condition2);
-            p.Conditions.Add(condition3);
-            p.Conditions.Add(condition4);
-
-            return p;
-        }
-
-        public static PragueRule<TParam, TResult> Create<T2, T3, T4, T5>(Func<TResult, TResult> action, IPragueRule<TParam, T2> condition1, IPragueRule<T2, T3> condition2, IPragueRule<T3, T4> condition3, IPragueRule<T4, TResult> condition4, params IPragueRule[] otherConditions)
+            => new PragueRule<TParamIn, TFinalParam>(condition1, condition2, condition3, condition4);
+        public static PragueRule<TParamIn, TFinalParam> Create<T2, T3, T4>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, T3> condition2, PraguePredicate<T3, T4> condition3, PraguePredicate<T4, dynamic> condition4, params PraguePredicate<dynamic, dynamic>[] moreConditions)
             where T2 : class
             where T3 : class
             where T4 : class
-        {
-            var p = new PragueRule<TParam, TResult>(action);
+            => new PragueRule<TParamIn, TFinalParam>(new dynamic[] { condition1, condition2, condition3, condition4 }.Concat(moreConditions).ToArray());
 
-            p.Conditions.Add(condition1);
-            p.Conditions.Add(condition2);
-            p.Conditions.Add(condition3);
-            p.Conditions.Add(condition4);
+        public IList<dynamic> Conditions { get; private set; } = new List<dynamic>();
 
-            foreach (var c in otherConditions) p.Conditions.Add(c);
+        public Action<TFinalParam> Action { get; private set; } = t => { };
 
-            return p;
-        }
-
-        private IList<dynamic> Conditions { get; } = new List<dynamic>();
-
-        public dynamic Action { get; private set; } = new Func<TParam, TResult>(t => t as TResult);
-
-        public TResult Result { get; private set; } = default(TResult);
-
-        public TResult Run(TParam param) => ShouldRun(param) ? (this.Result = Action(_conditionEvalResult)) : (this.Result = default(TResult));
-
-        public bool ShouldRun(TParam param)
+        public IPragueRuleResult TryRun(TParamIn param)
         {
             dynamic nextParam = param;
             if (this.Conditions.Any())
             {
-                foreach (var d in this.Conditions)
+                foreach (var c in this.Conditions)
                 {
-                    nextParam = d.Run(nextParam);
-                    if (object.ReferenceEquals(null, nextParam)) return false;
+                    nextParam = c(nextParam);
                 }
             }
-            _conditionEvalResult = (TResult)nextParam;
 
-            return true;
+            if (!object.ReferenceEquals(null, nextParam))
+            {
+                return new PragueRuleResult { Action = () => this.Action(nextParam as TFinalParam) };
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    class PragueRuleResult : IPragueRuleResult
+    {
+        public double Score { get; internal set; } = 1d;
+
+        public Action Action { get; internal set; }
+    }
+
+    class PragueFirst<TParam>
+    {
+        private IList<dynamic> _rules;
+        private PragueFirst(IList<dynamic> list)
+        {
+            _rules = list;
         }
 
-        public static implicit operator PragueRule<TParam, TResult>(Func<TResult, TResult> func) => new PragueRule<TParam, TResult>(func);
+        public static IPragueRuleResult Create<TLast>(TParam param, IPragueRule<TParam, TLast> rule1) where TLast : class
+        {
+            return new PragueFirst<TParam>(new List<dynamic> { rule1 })
+                .Run(param);
+        }
+
+        private IPragueRuleResult Run(TParam param)
+        {
+            foreach (var r in this._rules)
+            {
+                var conditionResult = r.TryRun(param);
+                if (!object.ReferenceEquals(null, conditionResult)) return conditionResult as IPragueRuleResult;
+            }
+
+            return null;
+        }
+
     }
 }

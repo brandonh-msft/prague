@@ -10,14 +10,22 @@ namespace Prague
             Console.WriteLine(@"Type 'I am <your name>' and hit <Enter>:");
             var name = Console.ReadLine();
 
-            PragueClient.First(name,
+            PragueFirst<string>.Create(name,
                 PragueRule<string, RegexMatch>.Create(
                     s =>
                     {
                         Console.WriteLine($@"Hi {s.Match.Groups[1].Value}! Welcome!");
-                        return s;
                     },
-                    PragueRule<string, RegexMatch>.Create()
+                    new PraguePredicate<string, RegexMatch>(s =>
+                    {
+                        var r = new Regex(@"I am (.*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                        var m = new RegexMatch(r, s);
+                        if (m.Match.Success)
+                        {
+                            return m;
+                        }
+                        return null;
+                    })));
 
         }
 
