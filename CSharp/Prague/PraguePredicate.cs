@@ -1,4 +1,8 @@
-﻿namespace Prague
+﻿using Prague.Interfaces;
+
+namespace Prague
 {
-    public delegate TOut PraguePredicate<TIn, out TOut>(TIn param) where TOut : class;
+    delegate TOut PraguePredicate<TIn, out TOut>(TIn param)
+        where TIn : class
+        where TOut : IPragueConditionResult<TIn>;
 }

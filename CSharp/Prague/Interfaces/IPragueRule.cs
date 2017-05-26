@@ -5,17 +5,14 @@ namespace Prague.Interfaces
 {
     internal interface IPragueRule
     {
-        IList<dynamic> Conditions { get; }
+        IList<Delegate> Conditions { get; }
+        Delegate Action { get; }
     }
 
-    internal interface IPragueRule<TParamIn, TFinalParam> : IPragueRule
-        where TFinalParam : class
+    internal interface IPragueRule<TParamIn> : IPragueRule
     {
-        Action<TFinalParam> Action { get; }
         IPragueRuleResult TryRun(TParamIn param);
     }
-
-    internal interface IPragueRule<TParamIn> : IPragueRule<TParamIn, object> { }
 
     internal interface IPragueRuleResult
     {

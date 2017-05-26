@@ -5,9 +5,4 @@ namespace Prague.Interfaces
     {
         double Score { get; }
     }
-
-    internal interface IPragueScoredRule<TParam, TResult> : IPragueRule<TParam, TResult> where TResult : class
-    {
-        double Score { get; }
-    }
 }
