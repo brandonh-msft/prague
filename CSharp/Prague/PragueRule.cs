@@ -1,33 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Prague.Interfaces;
 
 namespace Prague
 {
     class PragueRule<TParamIn, TFinalParam> : IPragueRule<TParamIn, TFinalParam> where TFinalParam : class
     {
-        private PragueRule(params dynamic[] conditions)
+        private PragueRule(Action<TFinalParam> action, params dynamic[] conditions)
         {
+            this.Action = action;
             this.Conditions = conditions ?? new dynamic[0];
         }
 
-        public static PragueRule<TParamIn, TFinalParam> Create(Action<TFinalParam> action, PraguePredicate<TParamIn, TFinalParam> condition) => new PragueRule<TParamIn, TFinalParam>(condition);
-        public static PragueRule<TParamIn, TFinalParam> Create<T2>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, TFinalParam> condition2) where T2 : class => new PragueRule<TParamIn, TFinalParam>(condition1, condition2);
+        public static PragueRule<TParamIn, TFinalParam> Create(Action<TFinalParam> action, PraguePredicate<TParamIn, TFinalParam> condition) => new PragueRule<TParamIn, TFinalParam>(action, condition);
+        public static PragueRule<TParamIn, TFinalParam> Create<T2>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, TFinalParam> condition2) where T2 : class => new PragueRule<TParamIn, TFinalParam>(action, condition1, condition2);
         public static PragueRule<TParamIn, TFinalParam> Create<T2, T3>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, T3> condition2, PraguePredicate<T3, TFinalParam> condition3)
             where T2 : class
             where T3 : class
-            => new PragueRule<TParamIn, TFinalParam>(condition1, condition2, condition3);
+            => new PragueRule<TParamIn, TFinalParam>(action, condition1, condition2, condition3);
         public static PragueRule<TParamIn, TFinalParam> Create<T2, T3, T4>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, T3> condition2, PraguePredicate<T3, T4> condition3, PraguePredicate<T4, TFinalParam> condition4)
             where T2 : class
             where T3 : class
             where T4 : class
-            => new PragueRule<TParamIn, TFinalParam>(condition1, condition2, condition3, condition4);
+            => new PragueRule<TParamIn, TFinalParam>(action, condition1, condition2, condition3, condition4);
         public static PragueRule<TParamIn, TFinalParam> Create<T2, T3, T4>(Action<TFinalParam> action, PraguePredicate<TParamIn, T2> condition1, PraguePredicate<T2, T3> condition2, PraguePredicate<T3, T4> condition3, PraguePredicate<T4, dynamic> condition4, params PraguePredicate<dynamic, dynamic>[] moreConditions)
             where T2 : class
             where T3 : class
             where T4 : class
-            => new PragueRule<TParamIn, TFinalParam>(new dynamic[] { condition1, condition2, condition3, condition4 }.Concat(moreConditions).ToArray());
+            => new PragueRule<TParamIn, TFinalParam>(action, new dynamic[] { condition1, condition2, condition3, condition4 }.Concat(moreConditions).ToArray());
 
         public IList<dynamic> Conditions { get; private set; } = new List<dynamic>();
 
@@ -41,6 +43,7 @@ namespace Prague
                 foreach (var c in this.Conditions)
                 {
                     nextParam = c(nextParam);
+                    if (nextParam == null) return null;
                 }
             }
 
@@ -78,9 +81,9 @@ namespace Prague
 
         private IPragueRuleResult Run(TParam param)
         {
-            foreach (var r in this._rules)
+            foreach (object r in this._rules)
             {
-                var conditionResult = r.TryRun(param);
+                var conditionResult = r.GetType().GetMethod(@"TryRun").Invoke(r, new object[] { param }) as IPragueRuleResult;
                 if (!object.ReferenceEquals(null, conditionResult)) return conditionResult as IPragueRuleResult;
             }
 

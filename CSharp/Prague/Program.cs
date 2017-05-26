@@ -7,35 +7,36 @@ namespace Prague
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(@"Type 'I am <your name>' and hit <Enter>:");
-            var name = Console.ReadLine();
+            while (true)
+            {
+                Console.WriteLine(@"Type 'I am <your name>' and hit <Enter>:");
+                var name = Console.ReadLine();
 
-            PragueFirst<string>.Create(name,
-                PragueRule<string, RegexMatch>.Create(
-                    s =>
-                    {
-                        Console.WriteLine($@"Hi {s.Match.Groups[1].Value}! Welcome!");
-                    },
-                    new PraguePredicate<string, RegexMatch>(s =>
-                    {
-                        var r = new Regex(@"I am (.*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                        var m = new RegexMatch(r, s);
-                        if (m.Match.Success)
-                        {
-                            return m;
-                        }
-                        return null;
-                    })));
+                PragueFirst<string>.Create(name,
+                    PragueRule<string, RegexMatch>.Create(
+                        s => Console.WriteLine($@"Hi {s.Match.Groups[1].Value}! Welcome!"),
+                        s => RegexMatch.Create(@"I am (.*)", s)))
+
+
+
+                        .Action?.Invoke();
+            }
 
         }
 
         class RegexMatch
         {
-            public RegexMatch(Regex regex, string text)
+            public static RegexMatch Create(string regex, string text)
+            {
+                var tryCreate = new RegexMatch(regex, text);
+                return tryCreate.Match.Success ? tryCreate : null;
+            }
+
+            private RegexMatch(string regex, string text)
             {
                 this.Text = text;
-                this.Regex = regex;
-                this.Match = regex.Match(text);
+                this.Regex = new Regex(regex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                this.Match = this.Regex.Match(text);
             }
             public string Text { get; private set; }
             public Match Match { get; private set; }
