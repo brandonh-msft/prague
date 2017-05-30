@@ -1,21 +1,28 @@
-﻿using System.Dynamic;
-
-namespace Prague.Interfaces
+﻿namespace Prague.Interfaces
 {
-    internal interface IPragueConditionResult { }
-    internal interface IPragueConditionResult<TIn> : IPragueConditionResult where TIn : class
+    internal interface IPragueConditionResult
+    {
+        double Score { get; }
+    }
+    internal interface IPragueConditionResult<TIn> : IPragueConditionResult
     {
         TIn Source { get; }
     }
 
-    class ConditionResult<TIn> : DynamicObject, IPragueConditionResult<TIn> where TIn : class
+    abstract class ConditionResult : IPragueConditionResult
     {
-        public ConditionResult(TIn source)
+        public double Score { get; } = 1d;
+
+        public static ConditionResult<TIn> FromBoolean<TIn>(TIn source, bool value) => new ConditionResult<TIn>(value ? source : default(TIn));
+    }
+
+    class ConditionResult<TIn> : ConditionResult, IPragueConditionResult<TIn>
+    {
+        protected internal ConditionResult(TIn source)
         {
             this.Source = source;
         }
 
-        public static ConditionResult<TIn> FromBoolean(TIn source, bool value) => new ConditionResult<TIn>(value ? source : default(TIn));
 
         public TIn Source { get; private set; }
 

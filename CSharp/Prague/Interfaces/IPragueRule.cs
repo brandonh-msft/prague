@@ -1,23 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Prague.Interfaces
 {
-    internal interface IPragueRule
+    internal interface IPragueRule<TParam>
     {
-        IList<Delegate> Conditions { get; }
-        Delegate Action { get; }
+        IPragueRuleResult TryRun(TParam param);
+        PraguePredicate<TParam, IPragueConditionResult<TParam>> Condition { get; }
+        Action<IPragueConditionResult<TParam>> Action { get; }
     }
 
-    internal interface IPragueRule<TParamIn> : IPragueRule
+    internal interface IPragueRuleResult : IPragueConditionResult
     {
-        IPragueRuleResult TryRun(TParamIn param);
-    }
-
-    internal interface IPragueRuleResult
-    {
-        double Score { get; }
-
         Action Action { get; }
     }
 }

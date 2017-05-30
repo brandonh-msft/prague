@@ -13,18 +13,19 @@ namespace Prague
                 Console.WriteLine(@"Type 'I am <your name>' and hit <Enter>:");
                 var name = Console.ReadLine();
 
-                PragueFirst.Create(name,
-                    s => Console.WriteLine($@"Hi {s.Match.Groups[1].Value}! Welcome!"),
-                    s => RegexMatch.Create(@"I am (.*)", s))
-
-
-
-                    ?.Action?.Invoke();
+                PragueFirst.Create
+                    .WithParam(name)
+                    .WithRule(
+                        a => Console.WriteLine($@"Hi {a.Match.Groups[1].Value}! Welcome!"),
+                        s => RegexMatch.Create(@"I am (.*)", s))
+                    .WithRule(
+                        a => Console.WriteLine($@"Yo {a.Source}! Welcome!"),
+                        s => ConditionResult.FromBoolean(s, s.StartsWith("b", StringComparison.OrdinalIgnoreCase)))
+                .Run()?.Action?.Invoke();
             }
-
         }
 
-        class RegexMatch : IPragueConditionResult<string>
+        class RegexMatch : ConditionResult<string>
         {
             public static RegexMatch Create(string regex, string text)
             {
@@ -32,17 +33,15 @@ namespace Prague
                 return tryCreate.Match.Success ? tryCreate : null;
             }
 
-            private RegexMatch(string regex, string text)
+            private RegexMatch(string regex, string text) : base(text)
             {
-                this.Source = text;
                 this.Regex = new Regex(regex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 this.Match = this.Regex.Match(text);
             }
+
             public string Text => this.Source;
             public Match Match { get; private set; }
             public Regex Regex { get; private set; }
-
-            public string Source { get; private set; }
         }
     }
 }
