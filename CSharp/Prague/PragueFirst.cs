@@ -7,10 +7,10 @@ namespace Prague
 {
     class PragueFirst
     {
-        private IList<IPragueRule> _rules;
-        private PragueFirst(IList<IPragueRule> list)
+        private readonly IList<IPragueRule> _rules;
+        private PragueFirst(IList<IPragueRule> rules)
         {
-            _rules = list;
+            _rules = rules;
         }
 
         public static IPragueRuleResult Create<TParam, TResult>(TParam param, Action<TResult> action, params PraguePredicate<TParam, TResult>[] rules)
