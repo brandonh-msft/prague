@@ -8,10 +8,6 @@ namespace Prague
     static class PragueFirst
     {
         public static PragueFirstCreator Create => new PragueFirstCreator();
-        public static IPragueRuleResult FromConditions<TParam>(TParam param, Action<IPragueConditionResult<TParam>> action, params PraguePredicate<TParam, IPragueConditionResult<TParam>>[] rules)
-        {
-            return new PragueFirst<TParam>(rules.Select(r => PragueRule.Create(action, r) as IPragueRule<TParam>).ToList()).TryRun(param);
-        }
     }
 
     class PragueFirstCreator
@@ -19,11 +15,14 @@ namespace Prague
         internal PragueFirstCreator() { }
 
         public PragueFirst<TParam> WithParam<TParam>(TParam param) => new PragueFirst<TParam>(new List<IPragueRule<TParam>>(), param);
+        public IPragueRuleResult Easy<TParam, TResult>(TParam param, Action<TResult> action, params PraguePredicate<TParam, TResult>[] rules) where TResult : IPragueConditionResult<TParam>
+        {
+            return new PragueFirst<TParam>(rules.Select(r => PragueRule.Create(action, r) as IPragueRule<TParam>).ToList()).TryRun(param);
+        }
     }
 
     class PragueFirst<TParam> : IPragueRule<TParam>
     {
-        private List<IPragueRule<TParam>> list;
         private TParam _globalParam;
 
         internal PragueFirst(IList<IPragueRule<TParam>> rules)
@@ -33,7 +32,7 @@ namespace Prague
 
         public PragueFirst(List<IPragueRule<TParam>> list, TParam param) : this(list)
         {
-            this._globalParam = param;
+            _globalParam = param;
         }
 
         public PragueFirst<TParam> WithRule<TResult>(Action<TResult> action, PraguePredicate<TParam, TResult> condition) where TResult : IPragueConditionResult<TParam>
@@ -49,7 +48,7 @@ namespace Prague
                 var conditionResult = r.TryRun(param);
                 if (conditionResult != null)
                 {
-                    this.Action = conditionResult.Action;
+                    _evaluatedAction = conditionResult.Action;
                     return conditionResult;
                 }
             }
@@ -57,11 +56,12 @@ namespace Prague
             return null;
         }
 
-        public IPragueRuleResult Run() => TryRun(_globalParam);
+        public IPragueRuleResult TryRun() => TryRun(_globalParam);
 
         internal IList<IPragueRule<TParam>> Rules { get; } = new List<IPragueRule<TParam>>();
 
-        public Action Action { get; private set; }
+        private Action _evaluatedAction = null;
+        public Action Action => _evaluatedAction ?? TryRun(_globalParam)?.Action;
 
         PraguePredicate<TParam, IPragueConditionResult<TParam>> IPragueRule<TParam>.Condition => throw new NotImplementedException();
 
