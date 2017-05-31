@@ -8,33 +8,48 @@ namespace Prague
     {
         static void Main(string[] args)
         {
-            while (true)
+            try
             {
-                Console.WriteLine(@"Type 'I am <your name>' and hit <Enter>:");
-                var name = Console.ReadLine();
+                while (true)
+                {
+                    Console.WriteLine(@"Type 'I am <your name>' and hit <Enter>:");
+                    var name = Console.ReadLine();
 
-                //PragueFirst.Create
-                //    .WithParam(name)
-                //    .WithRule(
-                //        a => Console.WriteLine($@"Hi {a.Match.Groups[1].Value}! Welcome!"),
-                //        s => RegexMatch.Create(@"I am (.*)", s))
-                //    .WithRule(
-                //        a => Console.WriteLine($@"Yo {a.Source}! Welcome!"),
-                //        s => ConditionResult.FromBoolean(s, s?.StartsWith("b", StringComparison.OrdinalIgnoreCase) == true))
-                //?.Action?.Invoke();
+                    //PragueFirst.Create
+                    //    .WithParam(name)
+                    //    .WithRule(
+                    //        a => Console.WriteLine($@"Hi {a.Match.Groups[1].Value}! Welcome!"),
+                    //        s => RegexMatch.Create(@"I am (.*)", s))
+                    //    .WithRule(
+                    //        a => Console.WriteLine($@"Yo {a.Source}! Welcome!"),
+                    //        s => ConditionResult.FromBoolean(s, s?.StartsWith("b", StringComparison.OrdinalIgnoreCase) == true))
+                    //    .WithRule(
+                    //        a => { throw new ApplicationEndException(); },
+                    //        s => ConditionResult.FromBoolean(s, string.IsNullOrWhiteSpace(s))
+                    //    )
+                    //?.Action?.Invoke();
 
-                PragueFirst.Create
-                    .Easy(name,
-                        a => Console.WriteLine($@"Hi {a.Source}! Welcome!"),
-                        s =>
-                        {
-                            var m = RegexMatch.Create(@"I am (.*)", s);
-                            return ConditionResult.FromBoolean(m?.Match.Groups[1].Value, m != null);
-                        },
-                        s => ConditionResult.FromBoolean(s, s?.StartsWith("b", StringComparison.OrdinalIgnoreCase) == true))
-                ?.Action?.Invoke();
+                    PragueFirst.Create
+                        .Easy(name,
+                            a => Console.WriteLine($@"Hi {a.Source}! Welcome!"),
+                            s =>
+                            {
+                                var m = RegexMatch.Create(@"I am (.*)", s);
+                                return ConditionResult.FromBoolean(m?.Match.Groups[1].Value, m != null);
+                            },
+                            s => ConditionResult.FromBoolean(s, s?.StartsWith("b", StringComparison.OrdinalIgnoreCase) == true),
+                            s =>
+                            {
+                                if (string.IsNullOrWhiteSpace(s)) throw new ApplicationEndException();
+                                return null;
+                            })
+                    ?.Action?.Invoke();
+                }
             }
+            catch (ApplicationEndException) { }
         }
+
+        class ApplicationEndException : Exception { }
 
         class RegexMatch : ConditionResult<string>
         {
